@@ -36,7 +36,7 @@ jobs:
       uses: github-actions-x/commit@v2.6
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        push-branch: master
+        push-branch: main
         name: GitHub Action Bot
         email: schulferien@metaodi.ch
         commit-message: Update schulferien.csv with latest data
