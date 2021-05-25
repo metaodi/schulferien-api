@@ -16,8 +16,8 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 echo "Run the scraper..."
 python $DIR/scraper.py
 
-# 2. Export the database as csv
-echo "Export ICS to CSV..."
+# 2. Convert ics to  csv
+echo "Convert ICS to CSV..."
 
 echo "start_date,end_date,summary,location,description,uid,created_date" > $DIR/../data/zurich/schulferien.csv
 for f in $DIR/*.ics;
