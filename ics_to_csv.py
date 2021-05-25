@@ -5,7 +5,7 @@
 The CSV is printed to stdout.
 
 Usage:
-  ics_to_csv.py --file <path-to-ics-file> 
+  ics_to_csv.py --file <path-to-ics-file> [--skip-header]
   ics_to_csv.py (-h | --help)
   ics_to_csv.py --version
 
@@ -13,15 +13,26 @@ Options:
   -h, --help                  Show this screen.
   --version                   Show version.
   -f, --file <path-to-file>   Path to the ICS file.
+  -s, --skip-header           Skip CSV header from output
 
 """
 
 
 from icalendar import Calendar, Event
+import datetime
 import csv
 import sys
 from docopt import docopt
 arguments = docopt(__doc__, version='Convert ICS file to CSV 1.0')
+
+def convert_dates(v):
+    if isinstance(v.dt, datetime.date):
+        return datetime.datetime.combine(v.dt, datetime.time(0, 0))
+    return v.dt
+
+
+def str_strip(v):
+    return str(v).strip()
 
 
 def map_event(comp):
@@ -32,31 +43,31 @@ def map_event(comp):
     template = {
         'DTSTART': {
             'prop': 'start_date',
-            'fn': lambda x: x.dt,
+            'fn': convert_dates,
         },
         'DTEND': {
             'prop': 'end_date',
-            'fn': lambda x: x.dt,
+            'fn': convert_dates,
         },
         'DTSTAMP': {
             'prop': 'created_date',
-            'fn': lambda x: x.dt,
+            'fn': convert_dates,
         },
         'SUMMARY': { 
             'prop': 'summary',
-            'fn': str,
+            'fn': str_strip,
         },
         'LOCATION': { 
             'prop': 'location',
-            'fn': str,
+            'fn': str_strip,
         },
         'DESCRIPTION': { 
             'prop': 'description',
-            'fn': str,
+            'fn': str_strip,
         },
         'UID': {
             'prop': 'uid',
-            'fn': str,
+            'fn': str_strip,
         },
     }
     event = {'extra': {}}
@@ -80,20 +91,21 @@ for component in cal.walk(name="VEVENT"):
 
     # map properties
     event = map_event(component)
+    # delete fields that should not be exported as CSV
     del event['extra']
-
     events.append(event)
 
 
 # sort events by date
-sorted_events = sorted(events, key=lambda e: e['start_date'])
+sorted_events = sorted(events, key=lambda e: e['start_date'].date())
 
-field_names = ['start_date', 'end_date', 'summary', 'uid', 'created_date']
+field_names = ['start_date', 'end_date', 'summary', 'location', 'description', 'uid', 'created_date']
 writer = csv.DictWriter(sys.stdout, field_names,
                         delimiter=',',
                         quotechar='"',
                         lineterminator='\n',
                         quoting=csv.QUOTE_MINIMAL)
 
-writer.writeheader()
+if not arguments['--skip-header']:
+    writer.writeheader()
 writer.writerows(sorted_events)

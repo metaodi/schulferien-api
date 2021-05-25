@@ -1,3 +1,5 @@
 flask-restx
 icalendar
 docopts
+requests
+beautifulsoup4
